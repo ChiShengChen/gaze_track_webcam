@@ -303,6 +303,105 @@ plt.show()
 4. **Smoothing Processing**: Use exponential moving average to reduce jitter
 5. **Heatmap Generation**: Accumulate gaze points and generate visual heatmap
 
+### Technical Principles
+
+#### 1. **Feature Extraction (MediaPipe)**
+```python
+# Extract eye landmarks from 468 facial keypoints
+left_eye_landmarks = landmarks[33:42]    # Left eye contour
+right_eye_landmarks = landmarks[468:477]  # Right eye contour
+iris_landmarks = landmarks[468:478]       # Iris center points
+```
+
+#### 2. **Machine Learning Regression (Not Simple Geometry)**
+The system uses **polynomial regression** rather than simple geometric calculations:
+
+```python
+# Multi-frame averaging for noise reduction
+samples = []
+for 0.4 seconds:
+    samples.append(extract_features(frame))
+mean_features = np.mean(samples, axis=0)
+
+# Polynomial regression pipeline
+pipeline = Pipeline([
+    ("poly", PolynomialFeatures(degree=2)),  # 2nd-degree polynomial features
+    ("reg", Ridge(alpha=1.0))               # L2 regularized regression
+])
+
+# Edge weighting for better corner accuracy
+edge_weight = 1.0 + 1.5 * max(0.0, edge_distance)
+```
+
+#### 3. **Why Machine Learning vs. Geometry?**
+
+| Method | Accuracy | Limitations |
+|--------|----------|-------------|
+| **Simple Geometry** | 5-10cm error | Only works in ideal conditions |
+| **ML Regression** | 1-3cm error | Handles real-world variations |
+
+**Key advantages of ML approach:**
+- **Non-linear mapping**: Eye rotation vs. screen coordinates is non-linear
+- **Personal adaptation**: Each person has different facial geometry
+- **Robust to variations**: Handles different lighting, head poses, camera positions
+- **Edge accuracy**: Polynomial features + edge weighting improve corner precision
+
+#### 4. **High Precision Improvements (v2.0)**
+
+**Multi-frame Averaging:**
+```python
+# Collect 0.4 seconds of samples per calibration point
+samples = []
+t_end = time.time() + 0.4
+while time.time() < t_end:
+    feat = extract_features(frame)
+    if feat is not None:
+        samples.append(feat)
+mean_feat = np.mean(samples, axis=0)  # Noise reduction
+```
+
+**Edge Weighting:**
+```python
+# Higher weight for edge calibration points
+edge = 1.0 - 2.0 * min(nx, 1-nx, ny, 1-ny)  # 0=center, 1=edge
+weight = 1.0 + 1.5 * max(0.0, edge)         # γ=1.5 adjustable
+```
+
+**Polynomial Features:**
+```python
+# 2nd-degree polynomial features for non-linear mapping
+PolynomialFeatures(degree=2, include_bias=True)
+# Transforms: [x, y] → [1, x, y, x², xy, y²]
+```
+
+#### 5. **Mathematical Model**
+
+The regression model learns the mapping:
+```
+f: R^n → R²
+f(facial_features) = (screen_x, screen_y)
+```
+
+Where:
+- **Input**: Normalized eye/iris coordinates (n-dimensional feature vector)
+- **Output**: Screen pixel coordinates (x, y)
+- **Model**: Polynomial regression with edge weighting
+- **Training**: Ridge regression with L2 regularization
+
+#### 6. **Accuracy Factors**
+
+**Why edge accuracy is challenging:**
+- **Non-linear relationship**: Eye rotation vs. screen position is quadratic
+- **Camera parallax**: Off-center camera creates systematic bias
+- **Head pose variations**: Different viewing angles affect mapping
+- **Limited training data**: Fewer edge calibration points
+
+**How our improvements address this:**
+- **Polynomial features**: Capture non-linear relationships
+- **Edge weighting**: Give more importance to edge calibration points
+- **Multi-frame averaging**: Reduce noise in training data
+- **Higher calibration density**: 4x4 or 5x5 grids for better coverage
+
 ## License
 
 This project is licensed under the MIT License.

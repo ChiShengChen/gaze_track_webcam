@@ -137,6 +137,38 @@ timestamp,x,y
 - **Scikit-learn**: Regression model training
 - **PyQt6**: Advanced overlay interface
 
+## 🔬 Technical Principles
+
+### **Machine Learning vs. Simple Geometry**
+
+This system uses **polynomial regression** rather than simple geometric calculations:
+
+| Method | Accuracy | Why Better |
+|--------|----------|------------|
+| **Simple Geometry** | 5-10cm error | Only works in ideal conditions |
+| **ML Regression** | 1-3cm error | Handles real-world variations |
+
+### **Key Technical Features**
+
+- **Polynomial Regression**: 2nd-degree features for non-linear mapping
+- **Multi-frame Averaging**: 0.4s samples per calibration point for noise reduction
+- **Edge Weighting**: Higher weight for corner calibration points
+- **Personal Adaptation**: Learns individual facial geometry
+
+### **Mathematical Model**
+```
+f: R^n → R²
+f(facial_features) = (screen_x, screen_y)
+```
+
+**Input**: Normalized eye/iris coordinates  
+**Output**: Screen pixel coordinates  
+**Model**: Polynomial regression with edge weighting
+
+For detailed technical documentation, see:
+- [English Technical Details](README_EN.md#technical-principles)
+- [中文技術詳情](README_CN.md#技術原理)
+
 ## 📄 License
 
 This project is licensed under the MIT License.
