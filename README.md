@@ -1,6 +1,7 @@
 # Eye Tracking System
 
 A real-time eye tracking system based on Python, using webcam for gaze tracking, voice calibration, and real-time heatmap display. Designed for macOS with support for Chinese and English voice commands.
+<img width="2048" height="1234" alt="image" src="https://github.com/user-attachments/assets/4a3bbb7c-ac1e-4c9d-b9ea-ae4b0405d8f1" />
 
 ## 📖 Documentation
 
