@@ -1,0 +1,16 @@
+# 核心依賴
+mediapipe>=0.10.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# 語音處理
+vosk>=0.3.45
+sounddevice>=0.4.6
+
+# 圖像處理
+Pillow>=10.0.0
+
+# 進階功能（可選）
+PyQt6>=6.5.0
