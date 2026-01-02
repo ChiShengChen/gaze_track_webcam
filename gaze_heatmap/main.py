@@ -534,7 +534,15 @@ def run_demo(config: dict, args):
             timestamp = time.time()
             gaze_result = gaze_estimator.estimate(frame)
             
+            # Debug: track detection rate
+            if not hasattr(run_demo, '_debug_count'):
+                run_demo._debug_count = {'total': 0, 'detected': 0, 'last_log': time.time()}
+            
+            run_demo._debug_count['total'] += 1
+            
             if gaze_result is not None:
+                run_demo._debug_count['detected'] += 1
+                
                 # Map to screen
                 raw_x, raw_y = calibration.map_gaze_to_screen(
                     gaze_result.gaze_pitch,
@@ -546,6 +554,14 @@ def run_demo(config: dict, args):
                 # Smooth
                 smooth_x, smooth_y = smoother.update(raw_x, raw_y, timestamp)
                 
+                # Debug: log coordinates periodically
+                if time.time() - run_demo._debug_count['last_log'] > 2.0:
+                    detection_rate = run_demo._debug_count['detected'] / run_demo._debug_count['total'] * 100
+                    logger.debug(f"Detection rate: {detection_rate:.1f}% | Raw: ({raw_x:.1f}, {raw_y:.1f}) | Smooth: ({smooth_x:.1f}, {smooth_y:.1f})")
+                    run_demo._debug_count['last_log'] = time.time()
+                    run_demo._debug_count['total'] = 0
+                    run_demo._debug_count['detected'] = 0
+                
                 # Add to heatmap
                 heatmap.add_gaze_point(smooth_x, smooth_y, timestamp)
                 
@@ -553,6 +569,11 @@ def run_demo(config: dict, args):
                 gaze_trail.append((smooth_x, smooth_y))
                 if len(gaze_trail) > display_config.get('trail_length', 50):
                     gaze_trail.pop(0)
+            else:
+                # Debug: warn if no detection for a while
+                if run_demo._debug_count['total'] > 30 and run_demo._debug_count['detected'] == 0:
+                    logger.warning("No face detected for 30 frames. Check camera and lighting.")
+                    run_demo._debug_count['total'] = 0
                     
                 # Show camera with debug info
                 if display_config.get('show_camera_feed', False):
@@ -571,10 +592,23 @@ def run_demo(config: dict, args):
             
             # Draw crosshair
             if gaze_trail and display_config.get('show_gaze_crosshair', True):
+                # Get latest gaze point
+                latest_x, latest_y = gaze_trail[-1]
+                
+                # Convert screen coordinates to heatmap image coordinates
+                h, w = heatmap_colored.shape[:2]
+                crosshair_x = int(latest_x * w / screen_w)
+                crosshair_y = int(latest_y * h / screen_h)
+                
+                # Clamp to image bounds
+                crosshair_x = max(0, min(w - 1, crosshair_x))
+                crosshair_y = max(0, min(h - 1, crosshair_y))
+                
+                # Draw crosshair
                 heatmap_colored = renderer.render_crosshair(
                     heatmap_colored,
-                    int(gaze_trail[-1][0] * heatmap_colored.shape[1] / screen_w),
-                    int(gaze_trail[-1][1] * heatmap_colored.shape[0] / screen_h)
+                    crosshair_x,
+                    crosshair_y
                 )
                 
             cv2.imshow("heatmap", heatmap_colored)

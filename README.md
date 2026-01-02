@@ -14,7 +14,7 @@ This repository contains **two eye tracking systems**:
 
 ### 1. **Gaze Heatmap System** (New, Recommended) ⭐
 - **Location**: `gaze_heatmap/`
-- **Features**: ETH-XGaze model support, comprehensive CLI, advanced calibration
+- **Features**: ETH-XGaze model (default, best accuracy), L2CS-Net support, comprehensive CLI, advanced calibration
 - **Best for**: Research, accuracy evaluation, detailed analysis
 - **Quick Start**: See [Gaze Heatmap Quick Start](#-gaze-heatmap-system-quick-start)
 
@@ -28,7 +28,7 @@ This repository contains **two eye tracking systems**:
 
 ## 🚀 Gaze Heatmap System Quick Start
 
-The new **Gaze Heatmap System** provides advanced gaze tracking with ETH-XGaze model support:
+The new **Gaze Heatmap System** provides advanced gaze tracking with **ETH-XGaze as the default model** (best accuracy, supports MPS GPU acceleration):
 
 ### ⚠️ Important Usage Notes
 
@@ -76,12 +76,26 @@ python main.py evaluate --calibration my_calibration.yaml --num-points 20
 
 ### Key Features
 
-- 🎯 **ETH-XGaze Model**: State-of-the-art gaze estimation (optional, falls back to MediaPipe)
+- 🎯 **ETH-XGaze Model**: State-of-the-art gaze estimation (default, supports MPS GPU acceleration)
 - 📊 **Comprehensive CLI**: Full command-line interface for all operations
 - 🔬 **Accuracy Evaluation**: Built-in metrics (angular error, screen error, precision)
 - 📈 **Advanced Calibration**: Polynomial regression with edge weighting
 - 🎨 **Real-time Heatmap**: Live visualization with smoothing and fixation detection
 - 💾 **Data Export**: Save sessions, heatmaps, and evaluation reports
+
+### Model Accuracy Comparison
+
+Based on testing results, the supported models rank as follows:
+
+| Model | Accuracy | Performance | Notes |
+|-------|----------|-------------|-------|
+| **ETH-XGaze** | ⭐⭐⭐⭐⭐ Best | Fast (MPS GPU support) | Default model, recommended for best accuracy |
+| **L2CS-Net** | ⭐⭐⭐⭐ Very Good | Moderate | Good alternative, requires manual weight download |
+| **MediaPipe** | ⭐⭐⭐ Good | Fastest | Fallback option, no additional setup required |
+
+**Test Results**: ETH-XGaze > L2CS > MediaPipe
+
+ETH-XGaze provides the best accuracy and supports Apple Silicon GPU acceleration via MPS, making it the recommended default choice.
 
 For detailed documentation, see [`gaze_heatmap/how_to_run.md`](gaze_heatmap/how_to_run.md)
 

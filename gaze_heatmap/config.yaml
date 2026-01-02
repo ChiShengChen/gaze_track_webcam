@@ -3,8 +3,8 @@
 
 # Gaze Estimation Settings
 gaze:
-  model: "mediapipe"      # eth-xgaze | mpiigaze | mediapipe
-  device: "cpu"           # cpu | cuda
+  model: "eth-xgaze"     # eth-xgaze (支持 MPS GPU, 預設) | l2cs (最佳準確度) | mpiigaze | mediapipe
+  device: "cpu"           # cpu (穩定) | mps (Apple Silicon GPU, ETH-XGaze 支持) | cuda (NVIDIA GPU only)
   camera_id: 0
   frame_width: 1280
   frame_height: 720
