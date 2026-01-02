@@ -1,0 +1,97 @@
+{
+  "session_id": "session_20260102_023014",
+  "start_time": "2026-01-02T02:31:14.877487",
+  "screen_resolution": [
+    1512,
+    982
+  ],
+  "config": {
+    "gaze": {
+      "model": "eth-xgaze",
+      "device": "cpu",
+      "camera_id": 0,
+      "frame_width": 1280,
+      "frame_height": 720,
+      "fps": 30
+    },
+    "calibration": {
+      "num_points": 9,
+      "point_duration_ms": 1500,
+      "collection_window_ms": 500,
+      "polynomial_degree": 2,
+      "margin": 0.1,
+      "alpha": 1.0
+    },
+    "smoothing": {
+      "method": "kalman",
+      "kalman": {
+        "process_noise": [
+          1,
+          1,
+          10,
+          10
+        ],
+        "measurement_noise": [
+          50,
+          50
+        ],
+        "gap_threshold_ms": 500
+      },
+      "one_euro": {
+        "min_cutoff": 1.0,
+        "beta": 0.007,
+        "d_cutoff": 1.0,
+        "gap_threshold_ms": 500
+      },
+      "ema": {
+        "alpha": 0.3,
+        "gap_threshold_ms": 500
+      }
+    },
+    "heatmap": {
+      "sigma": 50.0,
+      "downsample": 4,
+      "decay_rate": 0.0,
+      "fixation_velocity_threshold": 100,
+      "fixation_duration_threshold": 100,
+      "colormap": "jet"
+    },
+    "evaluation": {
+      "viewing_distance_cm": 60.0,
+      "monitor_dpi": 96.0,
+      "num_test_points": 20,
+      "point_duration_ms": 1500,
+      "collection_window_ms": 500
+    },
+    "output": {
+      "base_dir": "./data",
+      "sessions_dir": "./data/sessions",
+      "heatmaps_dir": "./data/heatmaps",
+      "calibrations_dir": "./data/calibrations",
+      "benchmarks_dir": "./data/benchmarks",
+      "save_raw_gaze": true,
+      "save_video": false,
+      "save_screenshot": true
+    },
+    "display": {
+      "show_camera_feed": false,
+      "show_face_mesh": true,
+      "show_gaze_crosshair": true,
+      "show_gaze_trail": true,
+      "trail_length": 50,
+      "heatmap_opacity": 0.6,
+      "fullscreen_calibration": true
+    },
+    "logging": {
+      "level": "INFO",
+      "log_file": null
+    }
+  },
+  "statistics": {
+    "total_points": 1238,
+    "total_fixations": 0,
+    "mean_fixation_duration_ms": 0,
+    "max_intensity": 0.48898518085479736,
+    "mean_intensity": 0.013358316384255886
+  }
+}

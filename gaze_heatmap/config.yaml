@@ -1,0 +1,81 @@
+# Gaze Heatmap Application Configuration
+# ==========================================
+
+# Gaze Estimation Settings
+gaze:
+  model: "mediapipe"      # eth-xgaze | mpiigaze | mediapipe
+  device: "cpu"           # cpu | cuda
+  camera_id: 0
+  frame_width: 1280
+  frame_height: 720
+  fps: 30
+
+# Calibration Settings (優化後)
+calibration:
+  num_points: 16          # 增加到 16 點提高準確度
+  point_duration_ms: 2000 # 增加收集時間
+  collection_window_ms: 800  # 增加穩定收集窗口
+  polynomial_degree: 2    # Polynomial regression degree
+  margin: 0.08            # 減少邊緣間距，覆蓋更多螢幕
+  alpha: 0.5              # 降低正則化，更貼合數據
+
+# Smoothing Settings
+smoothing:
+  method: "kalman"        # kalman | one_euro | ema | none
+  kalman:
+    process_noise: [1, 1, 10, 10]      # Q diagonal: [x, y, vx, vy]
+    measurement_noise: [50, 50]         # R diagonal: [x, y]
+    gap_threshold_ms: 500               # Reset if gap exceeds this
+  one_euro:
+    min_cutoff: 1.0       # Hz - lower = smoother
+    beta: 0.007           # Speed coefficient - higher = more responsive
+    d_cutoff: 1.0         # Derivative cutoff frequency
+    gap_threshold_ms: 500
+  ema:
+    alpha: 0.3            # 0-1, higher = less smoothing
+    gap_threshold_ms: 500
+
+# Heatmap Settings
+heatmap:
+  sigma: 50.0             # Gaussian sigma in pixels
+  downsample: 4           # Internal resolution divisor
+  decay_rate: 0.0         # 0 = no decay, 0.001 = slow decay
+  fixation_velocity_threshold: 100  # px/s - below this = fixation
+  fixation_duration_threshold: 100  # ms - minimum fixation duration
+  colormap: "jet"         # jet | hot | plasma | viridis | inferno
+
+# Evaluation Settings
+evaluation:
+  viewing_distance_cm: 60.0
+  monitor_dpi: 96.0
+  num_test_points: 20
+  point_duration_ms: 1500
+  collection_window_ms: 500
+
+# Output Settings
+output:
+  base_dir: "./data"
+  sessions_dir: "./data/sessions"
+  heatmaps_dir: "./data/heatmaps"
+  calibrations_dir: "./data/calibrations"
+  benchmarks_dir: "./data/benchmarks"
+  save_raw_gaze: true
+  save_video: false
+  save_screenshot: true
+
+# Display Settings
+display:
+  show_camera_feed: false     # Show camera debug window
+  show_face_mesh: true        # Draw face mesh on debug view
+  show_gaze_crosshair: true   # Draw crosshair at gaze point
+  show_gaze_trail: true       # Draw trail of recent gaze points
+  trail_length: 50            # Number of points in trail
+  heatmap_opacity: 0.6        # Overlay opacity
+  fullscreen_calibration: true  # Use fullscreen for calibration
+  fullscreen_demo: ture      # Use fullscreen for demo (true = fullscreen, false = 800x450 window)
+
+# Logging Settings
+logging:
+  level: "INFO"               # DEBUG | INFO | WARNING | ERROR
+  log_file: null              # Path to log file, null = console only
+
