@@ -89,13 +89,17 @@ Based on testing results, the supported models rank as follows:
 
 | Model | Accuracy | Performance | Notes |
 |-------|----------|-------------|-------|
-| **ETH-XGaze** | ⭐⭐⭐⭐⭐ Best | Fast (MPS GPU support) | Default model, recommended for best accuracy |
-| **L2CS-Net** | ⭐⭐⭐⭐ Very Good | Moderate | Good alternative, requires manual weight download |
-| **MediaPipe** | ⭐⭐⭐ Good | Fastest | Fallback option, no additional setup required |
+| **ETH-XGaze** | ⭐⭐⭐ Relatively usable | Fast (MPS GPU support) | Default model, relatively better than alternatives |
+| **L2CS-Net** | ⭐⭐ Limited | Moderate | Requires manual weight download |
+| **MediaPipe** | ⭐⭐ Limited | Fastest | Fallback option, no additional setup required |
 
 **Test Results**: ETH-XGaze > L2CS > MediaPipe
 
-ETH-XGaze provides the best accuracy and supports Apple Silicon GPU acceleration via MPS, making it the recommended default choice.
+**Note**: All models have limitations in accuracy. ETH-XGaze performs relatively better among the available options and supports Apple Silicon GPU acceleration via MPS, making it the default choice.
+
+**Known Limitations**:
+- ⚠️ **Edge/Corner Sensitivity**: All models show reduced sensitivity when gazing at screen edges and corners. The tracking accuracy decreases significantly in peripheral areas compared to the center of the screen.
+- This is a common limitation in webcam-based gaze tracking systems and may require additional calibration points at screen edges to improve edge accuracy.
 
 For detailed documentation, see [`gaze_heatmap/how_to_run.md`](gaze_heatmap/how_to_run.md)
 
