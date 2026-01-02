@@ -2,7 +2,88 @@
 
 A real-time eye tracking system based on Python, using webcam for gaze tracking, voice calibration, and real-time heatmap display. Designed for macOS with support for Chinese and English voice commands.
 
-## Features
+## 🆕 Two Systems Available
+
+This repository contains **two eye tracking systems**:
+
+### 1. **Gaze Heatmap System** (New, Recommended) ⭐
+- **Location**: `gaze_heatmap/`
+- **Features**: ETH-XGaze model support, comprehensive CLI, advanced calibration
+- **Best for**: Research, accuracy evaluation, detailed analysis
+- **Quick Start**: See [Gaze Heatmap Quick Start](#-gaze-heatmap-system-quick-start)
+
+### 2. **Voice-Controlled System** (Original)
+- **Location**: Root directory (`gaze_tracker.py`)
+- **Features**: Voice commands, simple interface
+- **Best for**: Quick demos, simple use cases
+- **Quick Start**: See [Original System Quick Start](#-original-system-quick-start)
+
+---
+
+## 🚀 Gaze Heatmap System Quick Start
+
+The new **Gaze Heatmap System** provides advanced gaze tracking with ETH-XGaze model support:
+
+### ⚠️ Important Usage Notes
+
+**Before using the system, please note:**
+
+- 📏 **Viewing Distance**: Maintain approximately **60cm** distance from the screen for optimal accuracy
+- 🎯 **Head Position**: Keep your **head relatively still** during calibration and tracking
+- 💡 **Lighting**: Ensure adequate and uniform lighting; avoid backlighting or shadows
+- 👓 **Glasses**: Avoid reflective glasses that may interfere with tracking
+- 🪑 **Posture**: Maintain a stable sitting posture throughout the session
+- 🔄 **Recalibration**: Recalibrate if you change position or lighting conditions significantly
+
+### Setup and Usage
+
+```bash
+cd gaze_heatmap
+
+# Setup conda environment (one-time)
+conda create -n gaze_eth python=3.10 -y
+conda activate gaze_eth
+pip install -r requirements.txt
+
+# 1. Calibrate (required first)
+python main.py calibrate --output my_calibration.yaml
+
+# 2. Run live demo
+python main.py demo --calibration my_calibration.yaml
+
+# 3. Record session
+python main.py record --calibration my_calibration.yaml --duration 60
+
+# 4. Evaluate accuracy
+python main.py evaluate --calibration my_calibration.yaml --num-points 20
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `calibrate` | Run 9/16-point calibration procedure |
+| `demo` | Live demo with real-time heatmap |
+| `record` | Record gaze session with heatmap |
+| `evaluate` | Evaluate tracking accuracy |
+| `label` | Annotate recorded heatmaps |
+
+### Key Features
+
+- 🎯 **ETH-XGaze Model**: State-of-the-art gaze estimation (optional, falls back to MediaPipe)
+- 📊 **Comprehensive CLI**: Full command-line interface for all operations
+- 🔬 **Accuracy Evaluation**: Built-in metrics (angular error, screen error, precision)
+- 📈 **Advanced Calibration**: Polynomial regression with edge weighting
+- 🎨 **Real-time Heatmap**: Live visualization with smoothing and fixation detection
+- 💾 **Data Export**: Save sessions, heatmaps, and evaluation reports
+
+For detailed documentation, see [`gaze_heatmap/how_to_run.md`](gaze_heatmap/how_to_run.md)
+
+---
+
+## 🚀 Original System Quick Start
+
+### Features
 
 - 🎯 **Real-time Gaze Tracking**: High-precision facial feature extraction using Mediapipe
 - 🎤 **Voice Calibration**: Support for "here"/"這裡" voice commands for calibration and recording

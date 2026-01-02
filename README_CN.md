@@ -2,7 +2,88 @@
 
 一個基於Python的即時眼球追蹤系統，使用webcam進行視線追蹤、語音校正和即時熱區圖顯示。專為macOS設計，支援中英文語音指令。
 
-## 功能特色
+## 🆕 兩個系統可用
+
+本專案包含**兩個眼球追蹤系統**：
+
+### 1. **Gaze Heatmap 系統** (新版，推薦) ⭐
+- **位置**: `gaze_heatmap/`
+- **特色**: 支援 ETH-XGaze 模型、完整 CLI、進階校準
+- **適用**: 研究、準確度評估、詳細分析
+- **快速開始**: 見下方 [Gaze Heatmap 快速開始](#-gaze-heatmap-系統快速開始)
+
+### 2. **語音控制系統** (原始版)
+- **位置**: 根目錄 (`gaze_tracker.py`)
+- **特色**: 語音指令、簡單介面
+- **適用**: 快速演示、簡單使用
+- **快速開始**: 見下方 [原始系統快速開始](#-原始系統快速開始)
+
+---
+
+## 🚀 Gaze Heatmap 系統快速開始
+
+新的 **Gaze Heatmap 系統** 提供進階視線追蹤，支援 ETH-XGaze 模型：
+
+### ⚠️ 重要使用注意事項
+
+**使用系統前，請注意：**
+
+- 📏 **觀看距離**: 保持距離螢幕約 **60 公分**以獲得最佳準確度
+- 🎯 **頭部位置**: 在校準和追蹤過程中，請保持**頭部相對靜止**
+- 💡 **光線條件**: 確保光線充足且均勻，避免背光或陰影
+- 👓 **眼鏡**: 避免配戴反光眼鏡，可能干擾追蹤
+- 🪑 **姿勢**: 整個會話過程中保持穩定的坐姿
+- 🔄 **重新校準**: 如果大幅改變位置或光線條件，請重新校準
+
+### 設置與使用
+
+```bash
+cd gaze_heatmap
+
+# 設置 conda 環境（一次性）
+conda create -n gaze_eth python=3.10 -y
+conda activate gaze_eth
+pip install -r requirements.txt
+
+# 1. 校準（首次必須）
+python main.py calibrate --output my_calibration.yaml
+
+# 2. 運行即時演示
+python main.py demo --calibration my_calibration.yaml
+
+# 3. 錄製會話
+python main.py record --calibration my_calibration.yaml --duration 60
+
+# 4. 評估準確度
+python main.py evaluate --calibration my_calibration.yaml --num-points 20
+```
+
+### 可用命令
+
+| 命令 | 說明 |
+|------|------|
+| `calibrate` | 運行 9/16 點校準程序 |
+| `demo` | 即時演示與熱力圖 |
+| `record` | 錄製視線會話與熱力圖 |
+| `evaluate` | 評估追蹤準確度 |
+| `label` | 標註錄製的熱力圖 |
+
+### 主要特色
+
+- 🎯 **ETH-XGaze 模型**: 最先進的視線估計（可選，可回退到 MediaPipe）
+- 📊 **完整 CLI**: 所有操作的完整命令列介面
+- 🔬 **準確度評估**: 內建指標（角度誤差、螢幕誤差、精確度）
+- 📈 **進階校準**: 多項式回歸與邊緣加權
+- 🎨 **即時熱力圖**: 平滑與注視點檢測的即時視覺化
+- 💾 **數據匯出**: 儲存會話、熱力圖與評估報告
+
+詳細文件請見 [`gaze_heatmap/how_to_run.md`](gaze_heatmap/how_to_run.md)
+
+---
+
+## 🚀 原始系統快速開始
+
+### 功能特色
 
 - 🎯 **即時視線追蹤**: 使用Mediapipe進行高精度臉部特徵提取
 - 🎤 **語音校正**: 支援"here"/"這裡"語音指令進行校正和記錄
