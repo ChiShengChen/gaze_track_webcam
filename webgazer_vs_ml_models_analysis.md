@@ -10,6 +10,101 @@
 
 ---
 
+## 重要澄清：WebGazer.js 的真實架構
+
+### 常見誤解
+很多人以為 WebGazer.js 是「完全從頭訓練」的簡單方法。**這是錯誤的**。
+
+### 實際架構：混合系統
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    預訓練組件 (固定)                          │
+│  MediaPipe FaceMesh (TensorFlow.js) - 468 個面部關鍵點        │
+│          ↓                                                   │
+│     眼部區域裁剪 (基於 landmark 索引)                         │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  特徵提取 (固定流程)                          │
+│  眼部圖像 → 縮放至 10×6 → 灰度化 → 直方圖均衡化               │
+│          → 120 維特徵向量 (左眼 60 + 右眼 60)                 │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│               校準時訓練 (Ridge Regression)                   │
+│  120 維眼部像素特徵 → 螢幕座標 (x, y)                         │
+│  - 用戶點擊收集訓練數據 (50 個窗口)                           │
+│  - 滑鼠移動軌跡 (10 個窗口，1 秒內)                           │
+│  - 每 500ms 重新訓練回歸係數                                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### WebGazer.js 源碼證據
+
+**1. 使用 MediaPipe FaceMesh 預訓練模型**
+```javascript
+// facemesh.mjs
+import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
+
+const TFFaceMesh = function() {
+  this.model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+  this.detector = null;
+};
+```
+
+**2. 眼部特徵提取（120 維像素特徵）**
+```javascript
+// util.mjs
+util.getEyeFeats = function(eyes) {
+  let process = (eye) => {
+    let resized = this.resizeEye(eye, 10, 6);  // 縮放至 10x6
+    let gray = this.grayscale(resized.data, resized.width, resized.height);
+    let hist = [];
+    this.equalizeHistogram(gray, 5, hist);  // 直方圖均衡化
+    return hist;  // 60 像素/眼
+  };
+  return [].concat(process(eyes.left), process(eyes.right));  // 共 120 維
+}
+```
+
+**3. Ridge Regression 校準訓練**
+```javascript
+// ridgeReg.mjs
+reg.RidgeReg.prototype.predict = function(eyesObj) {
+  // 合併點擊和滑鼠軌跡數據
+  var eyeFeatures = this.eyeFeaturesClicks.data.concat(trailFeat);
+  var screenXArray = this.screenXClicksArray.data.concat(trailX);
+  
+  // 訓練 Ridge Regression
+  var coefficientsX = util_regression.ridge(screenXArray, eyeFeatures, this.ridgeParameter);
+  var coefficientsY = util_regression.ridge(screenYArray, eyeFeatures, this.ridgeParameter);
+  
+  // 預測：係數 × 特徵
+  var predictedX = 0;
+  for(var i=0; i< eyeFeats.length; i++){
+    predictedX += eyeFeats[i] * coefficientsX[i];
+  }
+}
+```
+
+**4. 持續再訓練機制**
+```javascript
+// ridgeWorker.mjs
+setInterval(retrain, trainInterval); // 每 500ms 重新訓練
+```
+
+### 組件對比：兩者都用預訓練模型！
+
+| 組件 | WebGazer.js | L2CS-Net / ETH-XGaze |
+|------|-------------|---------------------|
+| **面部偵測** | MediaPipe FaceMesh (預訓練) | RetinaFace / MediaPipe (預訓練) |
+| **眼部特徵** | 120 維原始像素 (無 CNN) | ResNet50 深度特徵 (預訓練) |
+| **校準訓練的是什麼** | Ridge Regression 係數 | Polynomial Regression 係數 |
+| **校準輸入** | 原始眼部像素特徵 | CNN 預測的 3D 角度 |
+
+---
+
 ## 第一部分：WebGazer.js vs L2CS-Net 對比
 
 ### 算法對比
@@ -322,13 +417,57 @@ def validate_calibration(self, ...):
 
 | 問題 | 答案 |
 |------|------|
-| 為何 WebGazer 更好？ | **端到端學習 + 用戶特定校準** |
-| L2CS/ETH-XGaze 為何表現差？ | **兩階段映射誤差累積 + 模型目標不匹配** |
+| WebGazer 完全從頭訓練？ | **否**，面部偵測用 MediaPipe FaceMesh 預訓練模型 |
+| 為何 WebGazer 更好？ | **校準直接作用於原始像素→螢幕的映射** |
+| L2CS/ETH-XGaze 為何表現差？ | **校準只能修正「角度→螢幕」，無法修正 CNN 的角度預測誤差** |
 | SOTA = 最好嗎？ | **不是。任務匹配比算法先進更重要** |
 
-### 核心洞見
+### 核心洞見（修正版）
 
-> WebGazer.js 用簡單的 Ridge Regression 直接學習「眼睛外觀 → 螢幕座標」映射，而 L2CS-Net / ETH-XGaze 先學習「眼睛 → 3D 視線角度」再映射到螢幕。對於螢幕凝視追蹤這個特定任務，**簡單直接的方法勝過複雜但目標不匹配的 SOTA 模型**。
+> **WebGazer**：預訓練模型只負責「找到眼睛在哪」，校準學習「眼睛像素→螢幕座標」
+> 
+> **L2CS/ETH-XGaze**：預訓練模型負責「預測 3D 視線角度」，校準只學習「角度→螢幕座標」
+
+前者讓校準有機會學習**完整的映射**，後者的校準只能做**誤差修正**，但 CNN 的系統性誤差難以用簡單多項式修正。
+
+### 真正的差異不在「是否預訓練」，而在於：
+
+#### 1. 映射的直接性
+
+**WebGazer.js**：
+```
+眼部像素 (120 維) → [Ridge Regression] → 螢幕座標 (x, y)
+                     ↑
+              校準時直接學習這個映射
+```
+
+**L2CS-Net**：
+```
+眼部像素 → [預訓練 ResNet50] → 3D 角度 (pitch, yaw)
+                                      ↓
+                              [Polynomial Regression] → 螢幕座標
+                                      ↑
+                              校準只學習這一段
+```
+
+#### 2. 特徵的「純度」
+
+| | WebGazer.js | L2CS-Net |
+|--|-------------|----------|
+| 輸入到校準模型 | 原始眼部像素 (與螢幕位置直接相關) | 預測的 3D 角度 (已有誤差) |
+| 校準學習的難度 | 簡單線性關係 | 需要修正 CNN 的預測誤差 |
+
+**關鍵洞見**：
+- WebGazer 的 Ridge Regression 輸入是**原始信號**
+- L2CS 的 Polynomial Regression 輸入是**已經被 CNN 處理過且有誤差的信號**
+
+#### 3. 即時再訓練
+
+WebGazer 會**持續收集數據並重新訓練**（每 500ms），包括：
+- 用戶點擊事件 (50 個窗口)
+- 滑鼠移動軌跡 (10 個窗口，1 秒內)
+
+L2CS/ETH-XGaze 的校準是**一次性**的，完成後模型就固定了。
 
 ### 一句話總結
 
@@ -345,4 +484,43 @@ def validate_calibration(self, ...):
 
 ---
 
+## 附錄：WebGazer.js 技術細節
+
+### Ridge Regression 數學公式
+
+```
+係數 = (X^T X + kI)^-1 * X^T y
+
+其中：
+- X: 眼部像素特徵矩陣 (n_samples × 120)
+- y: 螢幕座標 (X 或 Y)
+- k: 正則化參數 (10^-5)
+- I: 單位矩陣
+```
+
+### 關鍵參數
+
+| 參數 | 值 | 說明 |
+|------|-----|------|
+| Ridge 正則化 (k) | 10^-5 | 防止過擬合 |
+| 點擊數據窗口 | 50 | 最近 50 次點擊 |
+| 軌跡數據窗口 | 10 | 最近 1 秒內的滑鼠移動 |
+| 再訓練間隔 | 500ms | 持續適應用戶 |
+| 眼部圖像大小 | 10×6 | 每眼 60 像素 |
+| Kalman 測量噪聲 | 47 px | 平滑預測 |
+
+### 眼部 Landmark 索引 (MediaPipe FaceMesh)
+
+```javascript
+const EYE_INDICES = {
+  leftEyeUpper0: [466, 388, 387, 386, 385, 384, 398],
+  leftEyeLower0: [263, 249, 390, 373, 374, 380, 381, 382, 362],
+  rightEyeUpper0: [246, 161, 160, 159, 158, 157, 173],
+  rightEyeLower0: [33, 7, 163, 144, 145, 153, 154, 155, 133],
+};
+```
+
+---
+
 *分析日期：2026-01-21*
+*更新：加入 WebGazer.js 真實架構澄清*
